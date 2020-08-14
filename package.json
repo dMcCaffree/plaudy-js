@@ -1,6 +1,6 @@
 {
   "name": "plaudy",
-  "version": "1.0.0",
+  "version": "1.0.11",
   "description": "A JavaScript SDK for wrapping Plaudy's HTTP rest API.",
   "main": "index.js",
   "scripts": {
