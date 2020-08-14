@@ -20,7 +20,7 @@ exports.init = async (apiKey = '') => {
   }
 };
 
-exports.track = async (eventType, data) => {
+exports.track = async (eventType, data = {}) => {
   if (!eventType || typeof eventType === 'object') {
     return `Expected string 'eventType' as first argument.`;
   }
