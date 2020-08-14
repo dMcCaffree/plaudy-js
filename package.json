@@ -1,0 +1,24 @@
+{
+  "name": "plaudy",
+  "version": "1.0.0",
+  "description": "A JavaScript SDK for wrapping Plaudy's HTTP rest API.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dMcCaffree/plaudy-js.git"
+  },
+  "keywords": [
+    "analytics",
+    "plaudy",
+    "sdk"
+  ],
+  "author": "https://github.com/dMcCaffree",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dMcCaffree/plaudy-js/issues"
+  },
+  "homepage": "https://github.com/dMcCaffree/plaudy-js#readme"
+}
