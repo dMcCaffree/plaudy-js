@@ -1,26 +1,24 @@
 const baseUrl = 'https://api.plaudy.com/v1';
-let workspaceId = null;
-let userId = null;
-let objectId = null;
+window.userId = null;
+window.objectId = null;
+window.apiKey = null;
 
-exports.init = async (apiKey = '') => {
-  try {
-    const response = await makeRequest('POST', `${baseUrl}/auth/init`, {apiKey});
-    const responseObject = JSON.parse(response);
-    console.log('RESPONSE:', responseObject);
-
-    if (typeof responseObject === 'object' && responseObject.hasOwnProperty('id')) {
-      workspaceId = responseObject.id;
-    }
-
-    return JSON.parse(response);
-  } catch (error) {
-    console.log('ERROR:', error);
-    return error;
-  }
+exports.init = (apiKey = '') => {
+  window.apiKey = apiKey;
 };
 
-exports.track = async (eventType, data = {}) => {
+exports.identify = (user_id, object_id) => {
+    window.userId = user_id;
+    window.objectId = object_id;
+    return true;
+};
+
+exports.track = (eventType, data = {}) => {
+  if (!window.apiKey) {
+    retryTrack(eventType, data);
+    return false;
+  }
+
   if (!eventType || typeof eventType === 'object') {
     return `Expected string 'eventType' as first argument.`;
   }
@@ -35,19 +33,19 @@ exports.track = async (eventType, data = {}) => {
   }
 
   // WORKSPACE ID
-  request.workspace = workspaceId;
+  request.apiKey = window.apiKey;
 
   // USER ID (TRACKED USER)
-  if (userId && !data.hasOwnProperty('user_id')) {
-    request.trackedUser = userId;
+  if (window.userId && !data.hasOwnProperty('user_id')) {
+    request.trackedUser = window.userId;
   } else if (data.hasOwnProperty('user_id')) {
     request.trackedUser = data.user_id;
     delete data.user_id;
   }
 
   // OBJECT ID
-  if (objectId && !data.hasOwnProperty('object_id')) {
-    request.objectId = objectId;
+  if (window.objectId && !data.hasOwnProperty('object_id')) {
+    request.objectId = window.objectId;
   } else if (data.hasOwnProperty('object_id')) {
     request.objectId = data.object_id;
     delete data.object_id;
@@ -63,9 +61,8 @@ exports.track = async (eventType, data = {}) => {
   request.data = data;
 
   try {
-    console.log('REQUEST:', request);
-    const response = await makeRequest('POST', `${baseUrl}/events/track`, request);
-    return JSON.parse(response);
+    makeRequest('POST', `${baseUrl}/events/track`, request);
+    return true;
   } catch (error) {
     console.log('ERROR:', error);
     return error;
@@ -75,25 +72,26 @@ exports.track = async (eventType, data = {}) => {
 exports.count = async data => {
   if (typeof data !== 'object') {
     return false;
-  } else if (!workspaceId) {
+  } else if (!window.apiKey) {
+    retryCount(data);
     return false;
   }
 
   let request = {};
 
   // WORKSPACE ID
-  request.workspaceId = workspaceId;
+  request.apiKey = window.apiKey;
 
   // USER ID (TRACKED USER)
-  if (userId && !data.hasOwnProperty('user_id')) {
-    request.trackedUser = userId;
+  if (window.userId && !data.hasOwnProperty('user_id')) {
+    request.trackedUser = window.userId;
   } else if (data.hasOwnProperty('user_id')) {
     request.trackedUser = data.user_id;
   }
 
   // OBJECT ID
-  if (objectId && !data.hasOwnProperty('object_id')) {
-    request.objectId = objectId;
+  if (window.objectId && !data.hasOwnProperty('object_id')) {
+    request.objectId = window.objectId;
   } else if (data.hasOwnProperty('object_id')) {
     request.objectId = data.object_id;
   }
@@ -107,37 +105,13 @@ exports.count = async data => {
   if (data.hasOwnProperty('events')) {
     request.events = data.events;
   }
-  // TODO: Formulate the query to .count() endpoint;
-  /*
-  * PAYLOAD:
-  *
-  * {
-  *   events: [
-  *     "visit",
-  *     "click"
-  *   ],
-  *   timeframe: "today"
-  * }
-  *
-  * */
 
   try {
-    console.log('REQUEST:', request);
     const response = await makeRequest('POST', `${baseUrl}/analyze/count`, request);
     return JSON.parse(response);
   } catch (error) {
     console.log('ERROR:', error);
     return error;
-  }
-};
-
-exports.identify = async (user_id, object_id) => {
-  if (workspaceId) {
-    userId = user_id;
-    objectId = object_id;
-    return true;
-  } else {
-    return false;
   }
 };
 
@@ -167,4 +141,16 @@ function makeRequest(method, url, data) {
       xhr.send();
     }
   });
+}
+
+function retryTrack(eventType, data) {
+  setTimeout(() => {
+    exports.track(eventType, data);
+  }, 100);
+}
+
+function retryCount(data) {
+  setTimeout(() => {
+    exports.count(data);
+  }, 100);
 }
